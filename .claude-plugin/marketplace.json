@@ -1,0 +1,5 @@
+{
+  "name": "claude-session-lights",
+  "owner": { "name": "andrzejsokolowski" },
+  "plugins": [{ "name": "session-lights", "source": "./" }]
+}
