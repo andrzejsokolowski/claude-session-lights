@@ -176,7 +176,6 @@ let titleRefused = false
 let titleNote = ''
 let askedClaude = false
 async function syncTitle($: Dollar) {
-  if (titleRefused) return
   if (titleBusy) {
     titleAgain = true
     return
@@ -185,9 +184,12 @@ async function syncTitle($: Dollar) {
   try {
     do {
       titleAgain = false
-      if ((await $.store.get('titles')) === false) return
       const current = await currentTitle($)
       if (!current) return
+      // The chat's name as the sidebar shows it, without our dot: what the /lights panel lists.
+      const base = stripLight(current)
+      await update($, self, s => (s.title === base ? s : { ...s, title: base }))
+      if (titleRefused || (await $.store.get('titles')) === false) return
       const s = await read($, self)
       const wanted = `${EMOJI[s.light]} ${stripLight(current)}`
       if (wanted === current) {
@@ -356,18 +358,6 @@ export const register: Register = on => {
 
   on('ui.close', { id: PANE }, async ($, e, next) => {
     if (e.origin.kind === 'person') await $.store.set('panel', false)
-    return next(e)
-  }).catch(passThrough)
-
-  // The session's title, where the host hands one to the settings hooks (without our dot).
-  on('classic.SessionStart', async ($, e, next) => {
-    const title = stripLight(e.session_title ?? '')
-    if (title) await update($, self, s => ({ ...s, title }))
-    return next(e)
-  }).catch(passThrough)
-  on('classic.UserPromptSubmit', async ($, e, next) => {
-    const title = stripLight(e.session_title ?? '')
-    if (title) await update($, self, s => ({ ...s, title }))
     return next(e)
   }).catch(passThrough)
 
